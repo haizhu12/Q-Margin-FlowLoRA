@@ -9,14 +9,46 @@ from scripts.analyze_v2_14_quant_trackI_phase1 import run_quant_tracki_from_mani
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-FROZEN_AGGREGATE_TABLE = (
-    PROJECT_ROOT
-    / "outputs"
-    / "quant_main_v2_14_20260626"
-    / "phase1_trackI"
-    / "r14_replay"
-    / "aggregate_table.csv"
-)
+FROZEN_AGGREGATE_HEADER = [
+    "comparison",
+    "scope",
+    "source_table",
+    "source_variant",
+    "dino_delta_mean",
+    "clip_delta_mean",
+    "ci90_low",
+    "resampling_unit",
+    "n_bootstrap",
+    "copy_risk_rate_ci95_low",
+    "n_subjects",
+    "trigger_count",
+    "n_cases",
+    "false_intervention_rate",
+    "dino_delta_median",
+    "ci95_high",
+    "baseline_variant",
+    "ci90_high",
+    "win_rate_ci95_high",
+    "copy_ssim_delta_ci95_high",
+    "copy_ssim_delta_ci95_low",
+    "interval_method",
+    "copy_risk_rate_ci95_high",
+    "false_intervention_count",
+    "win_rate",
+    "trigger_rate",
+    "copy_risk_rate",
+    "clip_delta_ci95_high",
+    "ci95_low",
+    "copy_risk_count",
+    "bootstrap_seed",
+    "copy_ssim_delta_mean",
+    "ci_level",
+    "dino_delta_trimmed_mean_10pct",
+    "selected_method_counts",
+    "win_rate_ci95_low",
+    "clip_delta_ci95_low",
+    "selected_on_validation_method",
+]
 
 
 def _row(
@@ -106,9 +138,7 @@ def _toy_rows() -> list[dict]:
 
 
 def test_paper_row_field_order_matches_frozen_header_across_hash_seeds():
-    with FROZEN_AGGREGATE_TABLE.open("r", newline="", encoding="utf-8") as handle:
-        frozen_header = next(csv.reader(handle))
-
+    frozen_header = FROZEN_AGGREGATE_HEADER
     source = {key: f"value-for-{key}" for key in frozen_header[5:]}
     probe = """
 import json
