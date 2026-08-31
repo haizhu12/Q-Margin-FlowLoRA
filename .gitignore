@@ -1,0 +1,63 @@
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+/.pytest_tmp/
+.ruff_cache/
+.mypy_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments and local configuration
+.env
+.env.*
+!.env.example
+/.venv/
+/venv/
+/env/
+
+# Editors and operating-system metadata
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Packaging and build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs, temporary files, and local caches
+*.log
+/tmp/
+/temp/
+.cache/
+/.hf_cache/
+
+# Large local model and generated-output trees
+/outputs/
+/models/
+
+# Local datasets: publish only documentation, evaluation JSONL, and the
+# canonical validated subject manifest.
+/data/**
+!/data/README.md
+!/data/eval/
+/data/eval/**
+!/data/eval/*.jsonl
+!/data/subjects/
+/data/subjects/**
+!/data/subjects/subjects_sop_small_valid.jsonl
+
+# Internal working notes stay local; publish only the reproducibility guide.
+/docs/**
+!/docs/REPRODUCIBILITY.md

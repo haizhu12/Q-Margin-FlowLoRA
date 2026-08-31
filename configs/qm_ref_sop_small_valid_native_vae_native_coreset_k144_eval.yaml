@@ -1,0 +1,16 @@
+model:
+  inference_model_id: models/FLUX.2-klein-base-4B
+  torch_dtype: bf16
+
+reference_adapter:
+  source: native_vae
+  mode: latent_prefix
+  apply_native_adapter: false
+  tokens_per_image: 144
+  pool_grid: [12, 12]
+  ref_latent_image_size: 256
+  coreset_anchor_tokens: 64
+  txt_id_strategy: zero_prefix
+
+semantic_reference:
+  enabled: false

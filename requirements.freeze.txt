@@ -1,0 +1,19 @@
+# Validated CUDA 12.8 direct-dependency snapshot for the full runtime.
+# Install from the repository root with the PyPI index plus the official
+# PyTorch cu128 extra index, as documented in README.md.
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+diffusers==0.38.0
+transformers==5.10.2
+accelerate==1.13.0
+safetensors==0.8.0rc1
+einops==0.8.2
+PyYAML==6.0.3
+Pillow==12.2.0
+numpy==2.4.4
+tqdm==4.68.1
+matplotlib==3.11.0
+pytest==9.0.3
+
+# Install this package after its dependencies.
+-e .

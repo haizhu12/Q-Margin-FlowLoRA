@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qmargin-flowlora"
+version = "0.1.0"
+description = "Training-free Q-Margin native reference-token routing for FLUX.2"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=2.4,<3",
+    "Pillow>=12.2,<13",
+    "PyYAML>=6.0.3,<7",
+    "torch>=2.11,<2.12",
+]
+
+[project.optional-dependencies]
+inference = [
+    "accelerate>=1.13,<2",
+    "diffusers>=0.38,<0.39",
+    "einops>=0.8.2,<0.9",
+    "safetensors>=0.8.0rc1,<0.9",
+    "torchvision>=0.26,<0.27",
+    "tqdm>=4.68,<5",
+    "transformers>=5.10,<5.11",
+]
+figures = ["matplotlib>=3.11,<3.12"]
+test = [
+    "packaging>=26,<27",
+    "pytest>=9,<10",
+]
+full = [
+    "accelerate>=1.13,<2",
+    "diffusers>=0.38,<0.39",
+    "einops>=0.8.2,<0.9",
+    "matplotlib>=3.11,<3.12",
+    "safetensors>=0.8.0rc1,<0.9",
+    "torchvision>=0.26,<0.27",
+    "tqdm>=4.68,<5",
+    "transformers>=5.10,<5.11",
+]
+
+[tool.setuptools]
+packages = ["qmargin", "qmargin.ref"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
