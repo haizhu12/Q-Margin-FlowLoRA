@@ -17,12 +17,17 @@ The source image and generated result are local, ignored artifacts; they are not
 Run from the repository root after installing the full CUDA environment:
 
 ```powershell
-$project = (Get-Location)
-.venv\Scripts\python.exe scripts/run_v2_8_ctnr_oracle.py `
-  --config ($project / "demos/sofa_edit/edit_config_512.yaml") `
-  --eval_set ($project / "demos/sofa_edit/edit_manifest.jsonl") `
+$project = (Get-Location).Path
+$python = Join-Path $project ".venv\Scripts\python.exe"
+$config = Join-Path $project "demos\sofa_edit\edit_config_512.yaml"
+$manifest = Join-Path $project "demos\sofa_edit\edit_manifest.jsonl"
+$output = Join-Path $project "outputs\sofa_img2img_edit"
+
+& $python (Join-Path $project "scripts\run_v2_8_ctnr_oracle.py") `
+  --config $config `
+  --eval_set $manifest `
   --root $project `
-  --output_root ($project / "outputs/sofa_img2img_edit") `
+  --output_root $output `
   --height 512 `
   --width 512 `
   --num_inference_steps 30 `

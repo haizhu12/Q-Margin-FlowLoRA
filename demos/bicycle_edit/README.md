@@ -19,11 +19,16 @@ The image is not redistributed by this repository. The output directory is also 
 Run from the repository root after installing the full CUDA environment:
 
 ```powershell
-$project = (Get-Location)
-.venv\Scripts\python.exe scripts/run_background_replace.py `
-  --config ($project / "demos/bicycle_edit/edit_config_512.yaml") `
-  --source_image ($project / "data/subjects/sop_small_valid/sop_super_1/sop_11768/331617272124_0.JPG") `
-  --output_dir ($project / "outputs/bicycle_identity_edit") `
+$project = (Get-Location).Path
+$python = Join-Path $project ".venv\Scripts\python.exe"
+$config = Join-Path $project "demos\bicycle_edit\edit_config_512.yaml"
+$source = Join-Path $project "data\subjects\sop_small_valid\sop_super_1\sop_11768\331617272124_0.JPG"
+$output = Join-Path $project "outputs\bicycle_identity_edit"
+
+& $python (Join-Path $project "scripts\run_background_replace.py") `
+  --config $config `
+  --source_image $source `
+  --output_dir $output `
   --background_prompt "An empty photorealistic alpine forest trail at golden hour, warm sunlight filtering through pine trees, natural ground and a clear open space in the center for a product, realistic depth, no bicycle, no bike, no vehicle, no people, no animals, no text, no watermark." `
   --width 512 `
   --height 512 `

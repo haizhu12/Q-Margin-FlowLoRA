@@ -1,6 +1,6 @@
-# Reproducing Q-Margin
+# Reproducing the retained SOP-oriented Q-Margin workflow
 
-This guide runs the frozen Q-Margin generation and target-free selection protocol from local model and data assets. Commands assume PowerShell, Python 3.11+, the full CUDA environment from the root README, and execution from the repository root.
+This guide runs the repository's supported SOP-oriented Q-Margin candidate-generation, metric-table, and target-image-free selector workflow from local model and data assets. Commands assume PowerShell, Python 3.11+, the full CUDA environment from the root README, and execution from the repository root. This retained workflow requires multiple reference images and does not reproduce every dataset, external system, or metric in the paper.
 
 Formal generated images, metric tables, figures, and evidence bundles are local-only outputs. They are ignored by Git and are not claimed to be versioned with this repository.
 
@@ -10,12 +10,12 @@ The protocol uses:
 
 - frozen `FLUX.2-klein-base-4B` in `bf16`, with no checkpoint or adapter;
 - `512 x 512` output, 30 inference steps, and guidance scale `1.0`;
-- seed `42` stored in every evaluation JSONL record;
+- an explicit deterministic seed stored in every evaluation JSONL record and shared by all five routes for that record;
 - RGB references center-cropped/resized to `256 x 256` before native VAE encoding;
 - `K=144` reference tokens for each of five `(anchor, detail)` routes: `(64,80)`, `(48,96)`, `(32,112)`, `(16,128)`, and `(0,144)`;
 - RefMax selection followed by the locked DINO-copy Guard at delta `0.10`, relative to Static `(64,80)`.
 
-The generator has no `--seed` option: it reads `seed` from each manifest record. Use a local fixed-evaluation manifest whose records all contain `"seed": 42`; do not treat other example manifest seeds as the frozen paper setting.
+The generator has no `--seed` option: it reads `seed` from each manifest record. This SOP workflow uses the prescribed per-sample seeds stored in its fixed manifests; do not replace them with `42`. The paper's single-reference DreamBench++ setting uses seed `42`, but it is not supported by the complete fixed-reference evaluator path documented below.
 
 ## 2. Provide model, data, and a fixed-reference manifest
 
@@ -36,22 +36,26 @@ multi_reference_images
 
 For generation-only deployment, `single_reference_no_target` instead requires `case_id`, `prompt`, and exactly one entry in `ref_paths` (or `single_reference_images`). It does not require a target, subject, category, or multi-reference list. That schema cannot be passed to `evaluate_fixed_reference_metrics.py`, which requires the fixed-reference target and reference fields.
 
-Set portable local paths once:
+Set portable local paths once. The prompt avoids an empty-path failure when no environment variable has been configured:
 
 ```powershell
-$project = (Get-Location)
-$evalSet = [System.IO.Path]::GetFullPath($env:QMARGIN_EVAL_SET)
-$candidateRoot = $project / "outputs/reproduction/candidates"
-$metricRoot = $project / "outputs/reproduction/metrics"
-$selectionRoot = $project / "outputs/reproduction/refmax_guard"
+$project = (Get-Location).Path
+$python = Join-Path $project ".venv\Scripts\python.exe"
+$evalSet = (Resolve-Path (Read-Host "Path to your SOP fixed_reference JSONL")).Path
+$config = Join-Path $project "configs\qm_ref_sop_small_valid_native_vae_native_coreset_k144_eval.yaml"
+$candidateRoot = Join-Path $project "outputs\reproduction\candidates"
+$metricRoot = Join-Path $project "outputs\reproduction\metrics"
+$selectionRoot = Join-Path $project "outputs\reproduction\refmax_guard"
 ```
 
-Set `QMARGIN_EVAL_SET` to your seed-42 JSONL before running the block. Relative paths inside that JSONL resolve against `--root` for generation and `--project_root` for metric evaluation, so the commands deliberately pass `$project` to both.
+Relative paths inside the selected JSONL resolve against `--root` for generation and `--project_root` for metric evaluation, so the commands deliberately pass `$project` to both. Bundled SOP-oriented manifests retain their recorded per-sample seeds, but the associated dataset images are not bundled.
+
+The separate `single_reference_no_target` schema supports generation from one reference without a target. It cannot be passed to `evaluate_fixed_reference_metrics.py`, so this repository does not currently bundle a complete DreamBench++ generator-to-metrics-to-selector workflow.
 
 Validate the manifest and local images first:
 
 ```powershell
-.venv\Scripts\python.exe scripts/validate_fixed_reference_eval.py `
+& $python (Join-Path $project "scripts\validate_fixed_reference_eval.py") `
   --eval_set $evalSet `
   --root $project
 ```
@@ -59,8 +63,8 @@ Validate the manifest and local images first:
 ## 3. Generate all five equal-budget routes
 
 ```powershell
-.venv\Scripts\python.exe scripts/run_v2_8_ctnr_oracle.py `
-  --config ($project / "configs/qm_ref_sop_small_valid_native_vae_native_coreset_k144_eval.yaml") `
+& $python (Join-Path $project "scripts\run_v2_8_ctnr_oracle.py") `
+  --config $config `
   --eval_set $evalSet `
   --root $project `
   --output_root $candidateRoot `
@@ -77,7 +81,7 @@ Do not pass `--checkpoint`; the frozen runner rejects checkpoints. Expected loca
 ## 4. Calculate fixed-reference metrics
 
 ```powershell
-.venv\Scripts\python.exe scripts/evaluate_fixed_reference_metrics.py `
+& $python (Join-Path $project "scripts\evaluate_fixed_reference_metrics.py") `
   --eval_set $evalSet `
   --project_root $project `
   --method v2_8a_static_a064_d080 $candidateRoot v2_8a_static_a064_d080 `
@@ -100,8 +104,10 @@ The evaluator's `ref_copy_ssim_max` is a global RGB SSIM used by the local selec
 ## 5. Apply RefMax + Guard
 
 ```powershell
-.venv\Scripts\python.exe scripts/analyze_v2_14_refmax_guard_hybrid.py `
-  --eval_run frozen_seed42 ($metricRoot / "case_metrics.csv") `
+$caseMetrics = Join-Path $metricRoot "case_metrics.csv"
+
+& $python (Join-Path $project "scripts\analyze_v2_14_refmax_guard_hybrid.py") `
+  --eval_run local_fixed_eval $caseMetrics `
   --output_dir $selectionRoot `
   --baseline_method v2_8a_static_a064_d080 `
   --candidate_methods v2_8a_static_a064_d080 v2_8a_static_a048_d096 v2_8a_static_a032_d112 v2_8a_static_a016_d128 v2_8a_static_a000_d144 `
@@ -118,7 +124,8 @@ An independently maintained formal wrapper can be exercised only by explicit opt
 ```powershell
 $wrapperPath = Read-Host "Path to the external wrapper.py"
 $env:QMARGIN_EXTERNAL_WRAPPER = (Resolve-Path $wrapperPath).Path
-.venv\Scripts\python.exe -m pytest -q tests/test_reference_conditioning_modes.py
+$wrapperTest = Join-Path $project "tests\test_reference_conditioning_modes.py"
+& $python -m pytest -q $wrapperTest
 ```
 
 The wrapper is not bundled. When `QMARGIN_EXTERNAL_WRAPPER` is unset, its integration tests skip. Do not commit wrapper outputs, generated images, downloaded weights, dataset images, caches, or formal evidence bundles.
